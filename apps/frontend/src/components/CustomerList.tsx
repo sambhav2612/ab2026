@@ -19,7 +19,7 @@ const CustomerList: React.FC = () => {
       <hr />
 
       <section>
-        <h2>Customer Ledger</h2>
+        <h2>Customer List</h2>
         {isLoading ? (
           <div aria-label="Loading customers...">Loading...</div>
         ) : !customers || customers.length === 0 ? (
