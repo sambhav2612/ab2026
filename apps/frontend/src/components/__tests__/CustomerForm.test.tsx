@@ -1,51 +1,94 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CustomerForm } from '../CustomerForm';
-import { vi, describe, it, expect } from 'vitest';
+import CustomerForm from '../CustomerForm';
+import { vi } from 'vitest';
 
-describe('CustomerForm', () => {
-  it('should display validation errors when submitting an empty form', async () => {
-    const mockSuccess = vi.fn();
-    render(<CustomerForm onSuccess={mockSuccess} />);
+describe('CustomerForm Validation', () => {
+  const mockOnSubmit = vi.fn();
 
-    const submitButton = screen.getByRole('button', {
-      name: /register customer/i,
-    });
-    await userEvent.click(submitButton);
-
-    // Verify accessible error messages appear
-    expect(
-      await screen.findByText(/first name is required/i),
-    ).toBeInTheDocument();
-    expect(
-      await screen.findByText(/last name is required/i),
-    ).toBeInTheDocument();
-    expect(mockSuccess).not.toHaveBeenCalled();
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('should call onSuccess and reset form after successful submission', async () => {
-    const mockSuccess = vi.fn();
+  it('displays validation errors when submitting an empty form', async () => {
+    const user = userEvent.setup();
+    render(<CustomerForm onSubmit={mockOnSubmit} />);
 
-    // Mock the global fetch for the API call
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ id: '123', firstName: 'Jane', lastName: 'Doe' }),
+    // Click submit without filling anything
+    const submitButton = screen.getByRole('button', {
+      name: /create customer/i,
     });
+    await user.click(submitButton);
 
-    render(<CustomerForm onSuccess={mockSuccess} />);
+    // Verify Zod validation messages appear
+    expect(
+      await screen.findByText('First name must be at least 2 characters'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Last name must be at least 2 characters'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Valid date of birth in the past is required'),
+    ).toBeInTheDocument();
 
-    // Act: Fill out the form
-    await userEvent.type(screen.getByLabelText(/first name/i), 'Jane');
-    await userEvent.type(screen.getByLabelText(/last name/i), 'Doe');
-    await userEvent.type(screen.getByLabelText(/date of birth/i), '1995-05-10');
+    // Ensure onSubmit was never called
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
 
-    await userEvent.click(
-      screen.getByRole('button', { name: /register customer/i }),
-    );
+  it('displays validation errors for invalid data', async () => {
+    const user = userEvent.setup();
+    render(<CustomerForm onSubmit={mockOnSubmit} />);
 
-    // Assert: Success callback triggered
+    // Type invalid data (single characters, future date)
+    await user.type(screen.getByLabelText(/first name/i), 'A');
+    await user.type(screen.getByLabelText(/last name/i), 'B');
+
+    // Set a future date
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const futureDate = tomorrow.toISOString().split('T')[0];
+    await user.type(screen.getByLabelText(/date of birth/i), futureDate);
+
+    await user.click(screen.getByRole('button', { name: /create customer/i }));
+
+    expect(
+      await screen.findByText('First name must be at least 2 characters'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Last name must be at least 2 characters'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Valid date of birth in the past is required'),
+    ).toBeInTheDocument();
+
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
+  it('submits successfully with valid data and clears the form', async () => {
+    const user = userEvent.setup();
+    render(<CustomerForm onSubmit={mockOnSubmit} />);
+
+    const firstNameInput = screen.getByLabelText(/first name/i);
+    const lastNameInput = screen.getByLabelText(/last name/i);
+    const dobInput = screen.getByLabelText(/date of birth/i);
+
+    await user.type(firstNameInput, 'Ada');
+    await user.type(lastNameInput, 'Lovelace');
+    await user.type(dobInput, '1815-12-10');
+
+    await user.click(screen.getByRole('button', { name: /create customer/i }));
+
     await waitFor(() => {
-      expect(mockSuccess).toHaveBeenCalled();
+      expect(mockOnSubmit).toHaveBeenCalledWith({
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        dateOfBirth: '1815-12-10',
+      });
     });
+
+    // Verify form resets after successful submission
+    expect(firstNameInput).toHaveValue('');
+    expect(lastNameInput).toHaveValue('');
+    expect(dobInput).toHaveValue('');
   });
 });
