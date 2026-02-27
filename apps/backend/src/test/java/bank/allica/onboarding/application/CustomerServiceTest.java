@@ -1,4 +1,3 @@
-// apps/backend/src/test/java/bank/allica/onboarding/application/CustomerServiceTest.java
 package bank.allica.onboarding.application;
 
 import bank.allica.onboarding.application.ports.in.RegisterCustomerCommand;
