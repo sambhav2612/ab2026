@@ -5,27 +5,42 @@ import bank.allica.onboarding.domain.Customer;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Repository
 public class InMemoryCustomerRepositoryAdapter implements CustomerRepositoryPort {
 
-    // Thread-safe store to satisfy the in-memory requirement
-    private final Map<UUID, Customer> store = new ConcurrentHashMap<>();
+    private final CustomerJpaRepository jpaRepository;
+
+    public InMemoryCustomerRepositoryAdapter(CustomerJpaRepository jpaRepository) {
+        this.jpaRepository = jpaRepository;
+    }
 
     @Override
     public Customer save(Customer customer) {
-        store.put(customer.id(), customer);
+        // Map Domain Record -> JPA Entity
+        CustomerEntity entity = new CustomerEntity(
+                customer.id(),
+                customer.firstName(),
+                customer.lastName(),
+                customer.dateOfBirth());
+
+        jpaRepository.save(entity);
         return customer;
     }
 
     @Override
     public List<Customer> findAll() {
-        // Return a sorted list (by ID or name) to ensure predictable UI rendering
-        return store.values().stream()
-                .sorted((c1, c2) -> c1.lastName().compareToIgnoreCase(c2.lastName()))
-                .toList();
+        // Map JPA Entity -> Domain Record
+        return jpaRepository.findAll().stream()
+                .map(entity -> new Customer(
+                        entity.getId(),
+                        entity.getFirstName(),
+                        entity.getLastName(),
+                        entity.getDateOfBirth()))
+                // Sort by Last Name, then First Name for the UI
+                .sorted(java.util.Comparator.comparing(Customer::lastName, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(Customer::firstName, String.CASE_INSENSITIVE_ORDER))
+                .collect(Collectors.toList());
     }
 }
