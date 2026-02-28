@@ -3,7 +3,11 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "nx run-many --parallel --target=serve --projects=frontend,backend"
+    "dev": "nx run-many --parallel --target=serve --projects=frontend,backend",
+    "test": "nx run-many --parallel --target=test --projects=frontend,backend",
+    "test:watch": "nx run-many --parallel --target=test --projects=frontend,backend --watch",
+    "e2e": "nx e2e frontend-e2e",
+    "e2e:ui": "nx e2e frontend-e2e --ui"
   },
   "private": true,
   "workspaces": [
