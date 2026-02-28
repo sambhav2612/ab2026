@@ -3,7 +3,6 @@ import { useCustomers } from '../hooks/useCustomers';
 import CustomerForm from './CustomerForm';
 
 const CustomerList: React.FC = () => {
-  // Destructure the new createCustomer function
   const { customers, isLoading, createCustomer } = useCustomers();
 
   return (
@@ -28,7 +27,7 @@ const CustomerList: React.FC = () => {
           <ul>
             {customers.map((customer) => (
               <li key={customer.id}>
-                {customer.lastName}, {customer.firstName} (DOB:{' '}
+                {customer.firstName} {customer.lastName} (DOB:{' '}
                 {customer.dateOfBirth})
               </li>
             ))}

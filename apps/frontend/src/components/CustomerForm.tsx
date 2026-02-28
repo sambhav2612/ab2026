@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { customerSchema, CustomerFormData } from '../schemas/CustomerSchema';
 
 interface CustomerFormProps {
-  onSubmit: (data: CustomerFormData) => void;
+  onSubmit: (data: CustomerFormData) => Promise<void>;
 }
 
 const CustomerForm: React.FC<CustomerFormProps> = ({ onSubmit }) => {
@@ -12,15 +12,27 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onSubmit }) => {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<CustomerFormData>({
     resolver: zodResolver(customerSchema),
     mode: 'onBlur',
   });
 
-  const handleFormSubmit = (data: CustomerFormData) => {
-    onSubmit(data);
-    reset(); // Clear the form after successful submission
+  const handleFormSubmit = async (data: CustomerFormData) => {
+    try {
+      // Await the API call
+      await onSubmit(data);
+      reset(); // Clear the form only if successful
+    } catch (error) {
+      // Catch the backend exception and display it
+      if (error instanceof Error) {
+        setError('root.serverError', {
+          type: 'server',
+          message: error.message,
+        });
+      }
+    }
   };
 
   return (
@@ -28,51 +40,62 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onSubmit }) => {
       onSubmit={handleSubmit(handleFormSubmit)}
       aria-label="Create Customer Form"
     >
+      {/* --- Display Backend Exceptions Here --- */}
+      {errors.root?.serverError && (
+        <div
+          style={{
+            padding: '10px',
+            marginBottom: '15px',
+            backgroundColor: '#ffebee',
+            color: '#c62828',
+            borderLeft: '4px solid #c62828',
+          }}
+          role="alert"
+        >
+          <strong>Registration Failed: </strong>
+          {errors.root.serverError.message}
+        </div>
+      )}
+
+      {/* ... First Name Input ... */}
       <div>
         <label htmlFor="firstName">First Name</label>
         <input
           id="firstName"
           type="text"
           aria-invalid={!!errors.firstName}
-          aria-describedby={errors.firstName ? 'firstName-error' : undefined}
           {...register('firstName')}
         />
         {errors.firstName && (
-          <span id="firstName-error" style={{ color: 'red' }}>
-            {errors.firstName.message}
-          </span>
+          <span style={{ color: 'red' }}>{errors.firstName.message}</span>
         )}
       </div>
 
+      {/* ... Last Name Input ... */}
       <div>
         <label htmlFor="lastName">Last Name</label>
         <input
           id="lastName"
           type="text"
           aria-invalid={!!errors.lastName}
-          aria-describedby={errors.lastName ? 'lastName-error' : undefined}
           {...register('lastName')}
         />
         {errors.lastName && (
-          <span id="lastName-error" style={{ color: 'red' }}>
-            {errors.lastName.message}
-          </span>
+          <span style={{ color: 'red' }}>{errors.lastName.message}</span>
         )}
       </div>
 
+      {/* ... Date of Birth Input ... */}
       <div>
         <label htmlFor="dateOfBirth">Date of Birth</label>
         <input
           id="dateOfBirth"
           type="date"
           aria-invalid={!!errors.dateOfBirth}
-          aria-describedby={errors.dateOfBirth ? 'dob-error' : undefined}
           {...register('dateOfBirth')}
         />
         {errors.dateOfBirth && (
-          <span id="dob-error" style={{ color: 'red' }}>
-            {errors.dateOfBirth.message}
-          </span>
+          <span style={{ color: 'red' }}>{errors.dateOfBirth.message}</span>
         )}
       </div>
 

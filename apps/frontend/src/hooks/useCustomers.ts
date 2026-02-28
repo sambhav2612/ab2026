@@ -22,7 +22,10 @@ export const useCustomers = () => {
     setError(null);
     try {
       const response = await fetch(API_BASE_URL);
-      if (!response.ok) throw new Error('Failed to fetch customers');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || 'An unexpected error occurred');
+      }
 
       const data = await response.json();
       setCustomers(data);
@@ -43,7 +46,6 @@ export const useCustomers = () => {
   // POST: Create a new customer
   const createCustomer = async (customerData: CustomerFormData) => {
     setIsLoading(true);
-    setError(null);
     try {
       const response = await fetch(API_BASE_URL, {
         method: 'POST',
@@ -53,14 +55,15 @@ export const useCustomers = () => {
         body: JSON.stringify(customerData),
       });
 
-      if (!response.ok) throw new Error('Failed to create customer');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.error || 'An unexpected error occurred on the server.',
+        );
+      }
 
-      // Refresh the ledger to show the newly created customer
+      // Refresh the ledger on success
       await fetchCustomers();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'An error occurred saving data',
-      );
     } finally {
       setIsLoading(false);
     }
