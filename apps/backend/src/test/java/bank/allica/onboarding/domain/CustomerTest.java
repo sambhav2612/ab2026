@@ -30,6 +30,15 @@ class CustomerTest {
     }
 
     @Test
+    @DisplayName("should reject registration if last name is blank")
+    void shouldRejectEmptylastName() {
+        var dob = LocalDate.of(1990, 1, 1);
+        assertThatThrownBy(() -> new Customer("John", "   ", dob))
+           .isInstanceOf(IllegalArgumentException.class)
+           .hasMessageContaining("Last name cannot be blank");
+    }
+
+    @Test
     @DisplayName("should reject registration if customer is under 18")
     void shouldRejectMinor() {
         var underageDob = LocalDate.now().minusYears(17).minusDays(1);

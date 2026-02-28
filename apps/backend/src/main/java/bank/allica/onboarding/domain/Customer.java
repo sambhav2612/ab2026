@@ -14,7 +14,7 @@ public record Customer(UUID id, String firstName, String lastName, LocalDate dat
         this(UUID.randomUUID(), firstName, lastName, dateOfBirth);
     }
 
-    // Compact constructor for validation (Green phase implementation)
+    // Compact constructor for validation
     public Customer {
         if (firstName == null || firstName.trim().isEmpty()) {
             throw new IllegalArgumentException("First name cannot be blank");
