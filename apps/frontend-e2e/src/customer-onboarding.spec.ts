@@ -19,7 +19,7 @@ test.describe('Customer Onboarding E2E', () => {
     await expect(page.locator('#firstName')).toHaveValue('');
 
     // 4. Verify the new customer immediately appears in the ledger list
-    await expect(page.getByText('Turing, Alan (DOB: 1912-06-23)')).toBeVisible();
+    await expect(page.getByText('Alan Turing (DOB: 1912-06-23)')).toBeVisible();
   });
 
   test('Negative: Should display a server error when creating an underage customer', async ({ page }) => {
@@ -40,6 +40,6 @@ test.describe('Customer Onboarding E2E', () => {
     await expect(page.getByText('Customer must be at least 18 years old')).toBeVisible();
     
     // 5. Verify the user was NOT added to the ledger
-    await expect(page.getByText('Ritchie, Dennis')).toBeHidden();
+    await expect(page.getByText('Dennis Ritchie')).toBeHidden();
   });
 });
